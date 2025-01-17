@@ -1,70 +1,56 @@
+"""Card implementation for Flip 7."""
 from enum import Enum, auto
-from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 class CardType(Enum):
     """Types of cards in the game."""
-    NUMBER = 1
-    ACTION = 2
-    BONUS = 3
-    MODIFIER = 4  # Added MODIFIER type
+    NUMBER = auto()
+    ACTION = auto()
+    MODIFIER = auto()
 
 class ActionType(Enum):
+    """Types of action cards."""
     FREEZE = auto()
     DEAL_THREE = auto()
     SECOND_CHANCE = auto()
 
-class BonusType(Enum):
-    PLUS_2 = 2
-    PLUS_4 = 4
-    PLUS_6 = 6
-    PLUS_8 = 8
-    PLUS_10 = 10
-    MULTIPLY_2 = -2  # Using negative to indicate multiplication
-
-@dataclass
 class Card:
-    """A card in the game."""
-    card_type: CardType
-    number_value: Optional[int] = None
-    action_type: Optional[ActionType] = None
-    bonus_type: Optional[BonusType] = None
-    is_multiplier: bool = False  # Added for modifier cards
-
-    def __post_init__(self):
-        """Validate card configuration."""
-        valid = False
-        if self.card_type == CardType.NUMBER:
-            valid = self.number_value is not None and 0 <= self.number_value <= 12
-        elif self.card_type == CardType.ACTION:
-            # For action cards, the action_type should be passed as the second argument
-            if isinstance(self.number_value, ActionType):
-                self.action_type = self.number_value
-                self.number_value = None
-            valid = self.action_type is not None
-        elif self.card_type == CardType.BONUS:
-            valid = self.bonus_type is not None
-        elif self.card_type == CardType.MODIFIER:
-            valid = self.number_value is not None and self.number_value in [2, 4, 6, 8, 10]
-
-        if not valid:
-            raise ValueError("Invalid card configuration")
-
+    """Represents a card in the game."""
+    
+    def __init__(self, card_type: CardType, value: Union[int, ActionType], is_multiplier: bool = False):
+        """Initialize a new card."""
+        self.card_type = card_type
+        
+        if card_type == CardType.NUMBER:
+            if not isinstance(value, int) or value < 0 or value > 12:
+                raise ValueError(f"Invalid number value: {value}")
+            self.number_value = value
+            self.action_type = None
+            self.is_multiplier = False
+        elif card_type == CardType.ACTION:
+            if not isinstance(value, ActionType):
+                raise ValueError(f"Invalid action type: {value}")
+            self.number_value = None
+            self.action_type = value
+            self.is_multiplier = False
+        elif card_type == CardType.MODIFIER:
+            if not isinstance(value, int) or value < 0:
+                raise ValueError(f"Invalid modifier value: {value}")
+            self.number_value = value
+            self.action_type = None
+            self.is_multiplier = is_multiplier
+        else:
+            raise ValueError(f"Invalid card type: {card_type}")
+    
     def __str__(self) -> str:
+        """Return a string representation of the card."""
         if self.card_type == CardType.NUMBER:
             return str(self.number_value)
         elif self.card_type == CardType.ACTION:
             return self.action_type.name
-        else:
-            if self.bonus_type.value < 0:
-                return "x2"
-            return f"+{self.bonus_type.value}"
-
-    def apply_bonus(self, score: int) -> int:
-        """Apply bonus card effect to a score."""
-        if self.card_type != CardType.BONUS:
-            return score
-        
-        if self.bonus_type.value < 0:  # Multiply
-            return score * 2
-        return score + self.bonus_type.value 
+        else:  # MODIFIER
+            return f"{'×' if self.is_multiplier else '+'}{self.number_value}"
+    
+    def __repr__(self) -> str:
+        """Return a detailed string representation of the card."""
+        return f"Card({self.card_type.name}, {self.number_value if self.number_value is not None else self.action_type.name if self.action_type is not None else 'None'}, is_multiplier={self.is_multiplier})" 

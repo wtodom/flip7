@@ -12,9 +12,9 @@ class GameState:
     current_score: int
     card_count: int
     cards_seen: List[Card]
+    cards_in_hand: List[Card]  # The cards currently in the player's hand
     other_players_scores: List[int]
     max_score: int
-    cards_in_hand: List[Card]
     has_second_chance: bool
 
 class ProfileStrategy:

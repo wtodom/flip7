@@ -14,7 +14,7 @@ Flip 7 is a card game where players aim to collect exactly 7 unique number cards
   - Draw cards
   - Use action cards
   - Pass or freeze
-- **Win Condition**: First player to collect exactly 7 unique number cards
+- **Win Condition**: First player to collect exactly 7 unique number cards or highest score when all players are done
 
 ## Features
 
@@ -27,7 +27,7 @@ Flip 7 is a card game where players aim to collect exactly 7 unique number cards
   - Deck awareness and card counting
 
 - **Player Attributes**
-  - Intelligence (0-1): Affects decision quality
+  - Intelligence (0-1): Affects decision quality and learning
   - Risk Tolerance: Base risk and situational adjustments
   - Target Score: Preferred winning score
   - Catch-up Behavior: Aggression when behind
@@ -50,8 +50,9 @@ Flip 7 is a card game where players aim to collect exactly 7 unique number cards
 - **Visual Analysis**
   - Score progression charts
   - Player outcome analysis
-  - Head-to-head comparisons
+  - Head-to-head comparisons with detailed metrics
   - Summary dashboards
+  - Rolling average performance tracking
 
 ## Project Structure
 
@@ -59,19 +60,31 @@ Flip 7 is a card game where players aim to collect exactly 7 unique number cards
 flip7/
 ├── src/
 │   ├── game/               # Core game implementation
+│   │   ├── __init__.py
 │   │   ├── card.py        # Card types and mechanics
+│   │   ├── deck.py        # Deck management
 │   │   ├── game.py        # Game logic and flow
 │   │   └── player.py      # Player actions and state
 │   ├── profiles/          # AI player profiles
+│   │   ├── __init__.py
 │   │   ├── data/          # Profile configurations
+│   │   │   ├── balanced_betty.yaml
+│   │   │   ├── cautious_carl.yaml
+│   │   │   ├── risk_taker_rachel.yaml
+│   │   │   ├── superstitious_sam.yaml
+│   │   │   └── yolo_yuki.yaml
 │   │   ├── profile_loader.py  # YAML handling
 │   │   └── strategy.py    # Decision making
 │   ├── simulation/        # Simulation engine
+│   │   ├── __init__.py
 │   │   └── simulator.py   # Game orchestration
 │   ├── visualization/     # Analytics tools
+│   │   ├── __init__.py
 │   │   └── visualizer.py  # Data visualization
 │   └── run_profile_simulation.py  # Main script
 ├── tests/                 # Test suite
+├── setup.py              # Package configuration
+├── requirements.txt      # Dependencies
 └── output/               # Generated results
 ```
 
@@ -103,40 +116,51 @@ python src/run_profile_simulation.py
 
 This will:
 1. Run 1000 games with various player profiles
-2. Generate visualizations in `output/`
-3. Log statistics to `simulation.log`
+2. Generate visualizations in `output/`:
+   - Winning scores distribution
+   - Player outcomes analysis
+   - Win rates comparison
+   - Score progression
+   - Head-to-head comparisons
+   - Summary dashboard
+3. Log detailed statistics to `simulation.log`
 
 ### Available Player Profiles
 
 1. **Balanced Betty**
-   - Well-rounded decision making
+   - Well-rounded decision making (Intelligence: 0.75)
    - Adapts to game situations
-   - Moderate risk tolerance
+   - Moderate risk tolerance (0.55)
+   - Target score: 52
    - No superstitions
 
 2. **Cautious Carl**
-   - Risk-averse strategy
+   - Risk-averse strategy (Base risk: 0.3)
    - Values consistency
-   - Prefers lower scores
-   - Some card superstitions
+   - Prefers lower scores (Target: 45)
+   - Superstitious about 12 and Deal Three cards
+   - High deck awareness
 
 3. **Risk Taker Rachel**
-   - Aggressive play style
-   - High risk tolerance
-   - Aims for high scores
+   - Aggressive play style (Base risk: 0.8)
+   - High intelligence (0.9)
+   - Aims for high scores (Target: 65)
+   - Strong deck awareness
    - Pure logic-based decisions
 
 4. **Superstitious Sam**
    - Heavily influenced by numerology
-   - Avoids "unlucky" numbers
-   - Prefers odd-numbered cards
+   - Avoids specific "unlucky" numbers
    - High intelligence but superstitious
+   - Moderate risk tolerance
+   - Strong beliefs in lucky/unlucky cards
 
 5. **YOLO Yuki**
-   - Extremely aggressive
-   - Maximum risk tolerance
-   - Unrealistic target scores
-   - Chaotic decision making
+   - Extremely aggressive (Base risk: 0.95)
+   - Low intelligence (0.3)
+   - Unrealistic target score (77)
+   - Maximum catch-up aggression
+   - Considers all cards lucky!
 
 ## Technical Implementation
 
