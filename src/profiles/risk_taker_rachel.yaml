@@ -1,0 +1,17 @@
+name: "Risk Taker Rachel"
+description: "An aggressive player who aims for high scores and takes calculated risks"
+intelligence: 0.9
+risk_tolerance:
+  base: 0.8
+  card_count_weights: [1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5]
+  score_sensitivity: 0.6
+  deck_awareness: 0.8
+target_score: 65
+catch_up_aggression: 0.8
+lucky_cards:
+  enabled: false
+  cards: []
+superstitions:
+  enabled: false
+  negative: []
+  threshold: 0.5 

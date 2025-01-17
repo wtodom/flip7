@@ -1,0 +1,17 @@
+name: "Cautious Carl"
+description: "A risk-averse player who values consistency over high scores"
+intelligence: 0.7
+risk_tolerance:
+  base: 0.3
+  card_count_weights: [1.0, 0.9, 0.8, 0.6, 0.4, 0.2, 0.1]
+  score_sensitivity: 0.8
+  deck_awareness: 0.6
+target_score: 45
+catch_up_aggression: 0.4
+lucky_cards:
+  enabled: true
+  cards: [7, "Second Chance"]
+superstitions:
+  enabled: true
+  negative: [13, "Deal Three"]
+  threshold: 0.2 
