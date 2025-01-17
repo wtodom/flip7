@@ -1,0 +1,17 @@
+name: "Superstitious Sam"
+description: "A player obsessed with numerology and patterns"
+intelligence: 0.9  # Very smart but lets superstitions override logic
+risk_tolerance:
+  base: 0.3  # Generally cautious due to fears
+  card_count_weights: [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0]  # Only likes odd numbers of cards
+  score_sensitivity: 0.9
+  deck_awareness: 0.95  # Hyper-aware of cards
+target_score: 49  # Avoids numbers divisible by 10
+catch_up_aggression: 0.2  # Prefers to stay behind due to fear of leading
+lucky_cards:
+  enabled: true
+  cards: [3, 7, 9]  # Considers these extremely lucky
+superstitions:
+  enabled: true
+  negative: [4, 8, 12]  # Strongly avoids these "unlucky" numbers
+  threshold: 0.9  # Almost always acts on superstitions 
