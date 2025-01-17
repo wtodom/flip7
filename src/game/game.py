@@ -1,161 +1,193 @@
-from typing import List, Optional, Dict
-from loguru import logger
-from .deck import Deck
-from .player import Player
+"""Game implementation for Flip 7."""
+import random
+from typing import List, Optional, Tuple
 from .card import Card, CardType, ActionType
+from .player import Player
+from ..profiles.strategy import GameState
 
 class Game:
-    """Manages a game of Flip 7."""
+    """Represents a single game of Flip 7."""
     
-    def __init__(self, player_names: List[str], seed: Optional[int] = None):
+    def __init__(self, players: List[Player], seed: Optional[int] = None):
         """Initialize a new game with the given players."""
-        if not 5 <= len(player_names) <= 12:
-            raise ValueError("Game requires 5-12 players")
-        
-        self.deck = Deck(seed)
-        self.players = [Player(name) for name in player_names]
+        self.players = players
+        self.deck = self._create_deck()
+        self.discard_pile: List[Card] = []
         self.current_player_idx = 0
-        self.round_number = 0
-        self.game_over = False
-        self.round_stats: List[Dict] = []  # Track statistics for visualization
+        self.winner: Optional[Player] = None
+        
+        if seed is not None:
+            random.seed(seed)
+        random.shuffle(self.deck)
     
-    def start_round(self):
-        """Start a new round."""
-        self.round_number += 1
-        logger.info(f"Starting round {self.round_number}")
+    def _create_deck(self) -> List[Card]:
+        """Create and return a new deck of cards."""
+        deck = []
         
-        # Reset player states
-        for player in self.players:
-            player.hand.clear()
-            player.number_cards.clear()
-            player.bonus_cards.clear()
-            player.has_second_chance = False
-            player.is_frozen = False
-            player.has_passed = False
-            player.has_busted = False
+        # Number cards (0-12, four of each)
+        for value in range(13):
+            for _ in range(4):
+                deck.append(Card(CardType.NUMBER, value))
         
-        # Deal initial cards
-        for player in self.players:
-            card = self.deck.draw()
-            self._handle_card_effects(player, card)
+        # Action cards
+        for _ in range(4):
+            deck.append(Card(CardType.ACTION, ActionType.FREEZE))
+            deck.append(Card(CardType.ACTION, ActionType.DEAL_THREE))
+            deck.append(Card(CardType.ACTION, ActionType.SECOND_CHANCE))
         
-        self.current_player_idx = 0
+        # Modifier cards
+        for value in [2, 4, 6, 8, 10]:
+            deck.append(Card(CardType.MODIFIER, value))
+        deck.append(Card(CardType.MODIFIER, 2, is_multiplier=True))
+        
+        return deck
     
-    def _handle_card_effects(self, player: Player, card: Card) -> bool:
-        """
-        Handle effects of a card being given to a player.
-        Returns True if the round should end (7 numbers achieved).
-        """
-        try:
-            # Try to give the card to the player
-            would_bust = player.receive_card(card)
-            
-            if would_bust:
-                if player.has_second_chance:
-                    # Player can use Second Chance
-                    player.use_second_chance()
-                    return False
-                else:
+    def _get_game_state(self, player: Player) -> GameState:
+        """Create a GameState object for the current player."""
+        return GameState(
+            current_score=player.get_score(),
+            card_count=len(player.cards),
+            cards_seen=self.discard_pile.copy(),
+            other_players_scores=[p.get_score() for p in self.players if p != player],
+            max_score=100,  # Maximum possible score
+            cards_in_hand=player.cards.copy(),
+            has_second_chance=player.has_second_chance
+        )
+    
+    def _handle_deal_three(self, player: Player) -> bool:
+        """Handle a Deal Three card. Returns True if player busts."""
+        for _ in range(3):
+            if not self.deck:
+                self._shuffle_discard_pile()
+            if not self.deck:  # Still no cards after shuffle
+                return False
+                
+            card = self.deck.pop()
+            try:
+                would_bust = player.receive_card(card)
+                if would_bust:
                     player.has_busted = True
-                    logger.info(f"{player.name} busted!")
-                    return False
-            
-            # Handle Deal Three (only if player hasn't busted)
-            if (not player.has_busted and 
-                card.card_type == CardType.ACTION and 
-                card.action_type == ActionType.DEAL_THREE):
-                for _ in range(3):
-                    if len(self.deck.cards) == 0:
-                        break
-                    new_card = self.deck.draw()
-                    if self._handle_card_effects(player, new_card):
-                        return True
-                    if player.has_busted:  # Stop if player busted
-                        break
-            
-            # Handle Second Chance redistribution
-            if (card.card_type == CardType.ACTION and 
-                card.action_type == ActionType.SECOND_CHANCE and 
-                player.has_second_chance):
-                # Try to give to another player
-                for other_player in self.players:
-                    if (other_player != player and 
-                        not other_player.has_second_chance and
-                        not other_player.is_frozen and
-                        not other_player.has_passed and
-                        not other_player.has_busted):
-                        other_player.receive_card(card)
-                        return False
-                # No valid player found, discard the card
-                logger.info("Second Chance discarded - no valid recipients")
-            
-            return player.has_seven_numbers()
-            
-        except ValueError:
-            # Player cannot receive cards (frozen/passed/busted)
-            return False
+                    return True
+            except ValueError:
+                # Player can't receive cards (frozen/passed/busted)
+                self.discard_pile.append(card)
+                return False
+                
+        return False
     
-    def play_turn(self, should_flip: bool) -> bool:
+    def _shuffle_discard_pile(self) -> None:
+        """Shuffle the discard pile back into the deck."""
+        if not self.discard_pile:
+            return
+            
+        self.deck.extend(self.discard_pile)
+        self.discard_pile = []
+        random.shuffle(self.deck)
+    
+    def play_turn(self) -> Tuple[bool, Optional[Player]]:
         """
-        Play a turn for the current player.
-        Returns True if the round should end.
+        Play one player's turn.
+        Returns (game_over, winner) tuple.
         """
         player = self.players[self.current_player_idx]
         
+        # Skip if player can't take actions
         if player.is_frozen or player.has_passed or player.has_busted:
             self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
-            return False
+            return False, None
         
-        if not should_flip:
+        # Get game state for decision making
+        game_state = self._get_game_state(player)
+        
+        # Player decides whether to draw
+        if not player.should_draw_card(game_state):
             player.has_passed = True
-            logger.info(f"{player.name} passes with score {player.calculate_score()}")
             self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
-            return False
+            return self._check_game_over()
         
-        # Draw and handle card
-        card = self.deck.draw()
-        logger.info(f"{player.name} drew {card}")
-        if self._handle_card_effects(player, card):
-            logger.info(f"{player.name} got 7 unique numbers!")
-            return True
+        # Draw card
+        if not self.deck:
+            self._shuffle_discard_pile()
+        if not self.deck:  # Still no cards after shuffle
+            return True, self._determine_winner()
+            
+        card = self.deck.pop()
         
-        self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
-        return False
+        # Handle card
+        try:
+            would_bust = player.receive_card(card)
+            if would_bust:
+                if player.has_second_chance and player.should_use_second_chance(game_state):
+                    player.has_second_chance = False
+                else:
+                    player.has_busted = True
+                    self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
+                    return self._check_game_over()
+            
+            # Handle action cards
+            if card.card_type == CardType.ACTION:
+                if card.action_type == ActionType.DEAL_THREE:
+                    if self._handle_deal_three(player):
+                        self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
+                        return self._check_game_over()
+                elif card.action_type == ActionType.FREEZE:
+                    player.is_frozen = True
+                    self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
+                    return self._check_game_over()
+            
+            # Check for win condition
+            if player.has_seven_numbers():
+                self.winner = player
+                return True, player
+                
+        except ValueError:
+            # Player couldn't receive card
+            self.discard_pile.append(card)
+            self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
+            return self._check_game_over()
+        
+        # Move to next player if frozen or passed
+        if player.is_frozen or player.has_passed:
+            self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
+            
+        return self._check_game_over()
     
-    def is_round_over(self) -> bool:
-        """Check if the current round is over."""
-        return all(p.is_frozen or p.has_passed or p.has_busted 
-                  for p in self.players)
+    def _check_game_over(self) -> Tuple[bool, Optional[Player]]:
+        """Check if the game is over and determine winner if needed."""
+        # Game continues if any player can still take actions
+        for player in self.players:
+            if not (player.is_frozen or player.has_passed or player.has_busted):
+                return False, None
+        
+        return True, self._determine_winner()
     
-    def get_round_results(self) -> Dict:
-        """Get the results of the current round."""
-        results = {
-            'round': self.round_number,
-            'scores': {},
-            'status': {},
-            'cards': {},
-            'winner': None,
-            'winning_score': 0
-        }
+    def _determine_winner(self) -> Optional[Player]:
+        """Determine the winner of the game."""
+        if self.winner:
+            return self.winner
+            
+        # Find player with highest score
+        max_score = -1
+        winner = None
         
         for player in self.players:
-            score = player.calculate_score()
-            results['scores'][player.name] = score
-            results['cards'][player.name] = len(player.number_cards)
-            
-            if player.has_busted:
-                status = 'Busted'
-            elif player.is_frozen:
-                status = 'Frozen'
-            elif player.has_passed:
-                status = 'Passed'
-            else:
-                status = 'Active'
-            results['status'][player.name] = status
-            
-            if score > results['winning_score']:
-                results['winning_score'] = score
-                results['winner'] = player.name
+            score = player.get_score()
+            if score > max_score:
+                max_score = score
+                winner = player
         
-        self.round_stats.append(results)
-        return results 
+        # Update player strategies with game outcome
+        for player in self.players:
+            player.end_game(player == winner)
+        
+        return winner
+    
+    def play(self) -> Player:
+        """Play the game until completion and return the winner."""
+        game_over = False
+        winner = None
+        
+        while not game_over:
+            game_over, winner = self.play_turn()
+        
+        return winner 
