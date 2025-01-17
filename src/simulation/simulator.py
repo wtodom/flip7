@@ -10,6 +10,9 @@ from ..game.game import Game
 from ..game.player import Player
 from ..profiles.profile_loader import PlayerProfile, load_profile, load_all_profiles
 
+# Default profiles directory relative to src
+DEFAULT_PROFILES_DIR = Path(__file__).parent.parent / "profiles" / "data"
+
 @dataclass
 class PlayerConfig:
     """Configuration for a player in the simulation."""
@@ -23,7 +26,7 @@ class SimulationConfig:
     num_players: int = 6
     base_seed: Optional[int] = None
     player_configs: Optional[List[PlayerConfig]] = None
-    profiles_dir: Optional[Path] = None
+    profiles_dir: Optional[Path] = DEFAULT_PROFILES_DIR
 
 @dataclass
 class ProfileStats:
