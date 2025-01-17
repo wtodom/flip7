@@ -38,7 +38,6 @@ htmlcov/
 .ipynb_checkpoints
 
 # Project specific
-output/
 *.log
 logs/
 .DS_Store
