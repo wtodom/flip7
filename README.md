@@ -1,6 +1,6 @@
 # Flip 7 Game Simulator
 
-A Python-based simulator for the Flip 7 card game, featuring comprehensive game mechanics, statistical analysis, and visualizations.
+A Python-based simulator for the Flip 7 card game, featuring comprehensive game mechanics, statistical analysis, and visualizations. Created by AI with Cursor.
 
 ## Game Overview
 
