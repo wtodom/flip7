@@ -1,12 +1,14 @@
-"""Strategy implementation for profile-based players in Flip 7."""
+"""Strategy implementation for player profiles."""
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set
-from ..game.card import Card, CardType
+from typing import List, Dict, Optional
+import random
+
+from ..game.card import Card, CardType, ActionType
 from .profile_loader import PlayerProfile
 
 @dataclass
 class GameState:
-    """Current state of the game for strategy decisions."""
+    """Current state of the game from a player's perspective."""
     current_score: int
     card_count: int
     cards_seen: List[Card]
@@ -30,21 +32,27 @@ class ProfileStrategy:
         }
     
     def calculate_base_risk(self, state: GameState) -> float:
-        """Calculate base risk level from profile and current state."""
-        base = self.profile.risk_tolerance.base
-        
-        # Adjust for card count
-        if state.card_count < len(self.profile.risk_tolerance.card_count_weights):
-            weight = self.profile.risk_tolerance.card_count_weights[state.card_count]
-            base *= weight
-        
-        # Adjust for score sensitivity
-        score_factor = 1.0
-        if state.current_score >= self.profile.target_score:
-            score_factor = 0.5  # Reduce risk when near target
-        base *= (1.0 + (score_factor - 1.0) * self.profile.risk_tolerance.score_sensitivity)
-        
-        return min(max(base, 0.0), 1.0)
+        """Calculate the base risk level."""
+        # Start with the base risk tolerance
+        risk = self.profile.risk_tolerance.base * 1.1  # Increase base risk by 10%
+
+        # Adjust based on card count
+        if 0 <= state.card_count < len(self.profile.risk_tolerance.card_count_weights):
+            risk *= self.profile.risk_tolerance.card_count_weights[state.card_count]
+
+        # Adjust based on score sensitivity
+        score_ratio = state.current_score / self.profile.target_score
+        if score_ratio < 1.0:
+            # Increase risk when below target score
+            risk *= (1.0 + (1.0 - score_ratio) * self.profile.risk_tolerance.score_sensitivity * 0.5)
+        else:
+            # Decrease risk when above target score
+            risk *= (1.0 - (score_ratio - 1.0) * self.profile.risk_tolerance.score_sensitivity)
+
+        # Apply intelligence factor
+        risk = risk * (0.7 + self.profile.intelligence * 0.3)
+
+        return min(1.0, max(0.0, risk))
     
     def adjust_for_deck_awareness(self, base_risk: float, state: GameState) -> float:
         """Adjust risk based on cards seen and deck awareness."""
@@ -56,9 +64,9 @@ class ProfileStrategy:
         
         # Count remaining high and low cards
         high_cards = sum(1 for card in state.cards_seen 
-                        if card.card_type == CardType.NUMBER and card.value > 7)
+                        if card.card_type == CardType.NUMBER and card.number_value > 7)
         low_cards = sum(1 for card in state.cards_seen 
-                       if card.card_type == CardType.NUMBER and card.value <= 7)
+                       if card.card_type == CardType.NUMBER and card.number_value <= 7)
         
         # Adjust risk based on card distribution
         if high_cards > low_cards:
@@ -72,35 +80,33 @@ class ProfileStrategy:
         """Adjust risk based on lucky cards and superstitions."""
         if self.profile.lucky_cards.enabled:
             for card in state.cards_in_hand:
-                if (isinstance(card.value, int) and card.value in self.profile.lucky_cards.cards) or \
+                if (card.number_value is not None and card.number_value in self.profile.lucky_cards.cards) or \
                    (card.card_type == CardType.ACTION and str(card.action_type) in self.profile.lucky_cards.cards):
-                    self.current_game_state['lucky_cards_seen'] += 1
-                    risk *= 1.2  # Increase risk when lucky cards are present
-        
+                    risk = min(1.0, risk * 1.6)  # Increase risk by 60% for lucky cards
+
         if self.profile.superstitions.enabled:
             for card in state.cards_in_hand:
-                if (isinstance(card.value, int) and card.value in self.profile.superstitions.negative) or \
+                if (card.number_value is not None and card.number_value in self.profile.superstitions.negative) or \
                    (card.card_type == CardType.ACTION and str(card.action_type) in self.profile.superstitions.negative):
-                    self.current_game_state['superstition_cards_seen'] += 1
-                    risk *= self.profile.superstitions.threshold  # Reduce risk based on threshold
-        
-        return min(max(risk, 0.0), 1.0)
+                    if random.random() < self.profile.superstitions.threshold:
+                        risk *= 0.7  # Reduce risk by 30% for unlucky cards
+
+        return min(1.0, max(0.0, risk))
     
     def adjust_for_catch_up(self, risk: float, state: GameState) -> float:
-        """Adjust risk based on score difference from leader."""
+        """Adjust risk based on catch-up behavior."""
         if not state.other_players_scores:
             return risk
-            
-        max_opponent_score = max(state.other_players_scores)
-        score_difference = max_opponent_score - state.current_score
-        
-        if score_difference > 0:
-            # Increase risk when behind, scaled by aggression and intelligence
-            catch_up_factor = self.profile.catch_up_aggression * self.profile.intelligence
-            risk_increase = catch_up_factor * (score_difference / state.max_score)
-            risk *= (1.0 + risk_increase)
-            
-        return min(max(risk, 0.0), 1.0)
+
+        max_other_score = max(state.other_players_scores)
+        score_diff = max_other_score - state.current_score
+
+        if score_diff > 0:
+            # Increase risk when behind, scaled by catch_up_aggression
+            catch_up_factor = 1.0 + (score_diff / state.max_score) * self.profile.catch_up_aggression * 1.2
+            risk = min(1.0, risk * catch_up_factor)
+
+        return risk
     
     def learn_from_outcome(self, success: bool) -> None:
         """Update strategy based on decision outcomes."""
@@ -141,7 +147,6 @@ class ProfileStrategy:
         self.current_game_state['last_decision_risk'] = risk
         
         # Compare against random threshold
-        import random
         return random.random() < risk
     
     def should_use_second_chance(self, state: GameState) -> bool:

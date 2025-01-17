@@ -19,62 +19,64 @@ from src.simulation.simulator import (
 @pytest.fixture
 def test_profile_dir(tmp_path):
     """Create a temporary directory with test profiles."""
-    profile_dir = tmp_path / "profiles"
-    profile_dir.mkdir()
-    
-    # Create test profiles
-    profiles = [
-        {
-            "name": "Test Profile 1",
-            "description": "A test profile",
-            "intelligence": 0.5,
-            "risk_tolerance": {
-                "base": 0.5,
-                "card_count_weights": [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4],
-                "score_sensitivity": 0.5,
-                "deck_awareness": 0.5
-            },
-            "target_score": 50,
-            "catch_up_aggression": 0.5,
-            "lucky_cards": {
-                "enabled": True,
-                "cards": [7]
-            },
-            "superstitions": {
-                "enabled": True,
-                "negative": [13],
-                "threshold": 0.5
-            }
+    profiles_dir = tmp_path / "profiles"
+    profiles_dir.mkdir()
+
+    # Create test profile 1
+    profile1 = {
+        "name": "Test Profile 1",
+        "description": "A test profile",
+        "intelligence": 0.7,
+        "risk_tolerance": {
+            "base": 0.6,
+            "card_count_weights": [1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5],
+            "score_sensitivity": 0.6,
+            "deck_awareness": 0.7
         },
-        {
-            "name": "Test Profile 2",
-            "description": "Another test profile",
-            "intelligence": 0.8,
-            "risk_tolerance": {
-                "base": 0.7,
-                "card_count_weights": [1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5],
-                "score_sensitivity": 0.7,
-                "deck_awareness": 0.8
-            },
-            "target_score": 60,
-            "catch_up_aggression": 0.7,
-            "lucky_cards": {
-                "enabled": False,
-                "cards": []
-            },
-            "superstitions": {
-                "enabled": False,
-                "negative": [],
-                "threshold": 0.5
-            }
+        "target_score": 55,
+        "catch_up_aggression": 0.6,
+        "lucky_cards": {
+            "enabled": True,
+            "cards": [7]
+        },
+        "superstitions": {
+            "enabled": True,
+            "negative": [4],
+            "threshold": 0.5
         }
-    ]
-    
-    for i, profile in enumerate(profiles):
-        with open(profile_dir / f"profile_{i+1}.yaml", 'w') as f:
-            yaml.dump(profile, f)
-    
-    return profile_dir
+    }
+
+    # Create test profile 2
+    profile2 = {
+        "name": "Test Profile 2",
+        "description": "Another test profile",
+        "intelligence": 0.8,
+        "risk_tolerance": {
+            "base": 0.7,
+            "card_count_weights": [1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5],
+            "score_sensitivity": 0.7,
+            "deck_awareness": 0.8
+        },
+        "target_score": 60,
+        "catch_up_aggression": 0.7,
+        "lucky_cards": {
+            "enabled": False,
+            "cards": []
+        },
+        "superstitions": {
+            "enabled": False,
+            "negative": [],
+            "threshold": 0.5
+        }
+    }
+
+    # Write profiles to files
+    with open(profiles_dir / "profile_1.yaml", "w") as f:
+        yaml.dump(profile1, f)
+    with open(profiles_dir / "profile_2.yaml", "w") as f:
+        yaml.dump(profile2, f)
+
+    return profiles_dir
 
 def test_load_profile(test_profile_dir):
     """Test loading a single profile."""
@@ -82,9 +84,14 @@ def test_load_profile(test_profile_dir):
     
     assert isinstance(profile, PlayerProfile)
     assert profile.name == "Test Profile 1"
-    assert profile.intelligence == 0.5
-    assert profile.target_score == 50
-    assert len(profile.risk_tolerance.card_count_weights) == 7
+    assert profile.intelligence == 0.7
+    assert profile.risk_tolerance.base == 0.6
+    assert profile.target_score == 55
+    assert profile.catch_up_aggression == 0.6
+    assert profile.lucky_cards.enabled
+    assert 7 in profile.lucky_cards.cards
+    assert profile.superstitions.enabled
+    assert 4 in profile.superstitions.negative
 
 def test_load_all_profiles(test_profile_dir):
     """Test loading all profiles from a directory."""
@@ -124,7 +131,7 @@ def test_strategy_decision_making():
         description="Test profile for strategy decisions",
         intelligence=0.7,
         risk_tolerance=RiskTolerance(
-            base=0.5,
+            base=0.6,
             card_count_weights=[1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4],
             score_sensitivity=0.6,
             deck_awareness=0.7
@@ -137,7 +144,7 @@ def test_strategy_decision_making():
         ),
         superstitions=Superstitions(
             enabled=True,
-            negative=[13],
+            negative=[4],
             threshold=0.4
         )
     )
@@ -162,7 +169,8 @@ def test_strategy_decision_making():
     # Risk should be increased due to:
     # 1. Lucky card (7) present
     # 2. Behind other players (catch-up behavior)
-    assert 0.5 < true_ratio < 0.9  # Reasonable range given the factors
+    # Base risk is 0.6, increased by lucky card and catch-up
+    assert 0.6 < true_ratio < 0.95  # Adjusted range based on new base risk
 
 def test_game_with_profiles(test_profile_dir):
     """Test running a game with profiled players."""

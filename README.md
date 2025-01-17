@@ -1,18 +1,56 @@
-# Flip 7 Game Simulator
+# Flip 7 Card Game Simulator
 
-A Python-based simulator for the Flip 7 card game, featuring comprehensive game mechanics, statistical analysis, and visualizations. Created by AI with Cursor.
+A sophisticated simulation of the Flip 7 card game with AI players, profile-based strategies, and detailed analytics. Created by AI with Cursor.
 
 ## Game Overview
 
 Flip 7 is a card game where players aim to collect exactly 7 unique number cards. The game includes:
 - Number cards (0-12)
-- Action cards (Freeze, Second Chance, Deal Three)
-- Modifier cards (+2, +4, +6, +8, +10, x2)
+- Action cards (Freeze, Deal Three, Second Chance)
+- Modifier cards (bonuses and multipliers)
 
-Players take turns drawing cards and must decide when to pass or continue drawing. A player busts if they:
-- Draw a duplicate number
-- Exceed 7 unique numbers
-- Draw a number that makes their total exceed the target
+Players take turns drawing cards, trying to achieve exactly 7 unique numbers while avoiding busting.
+
+## Features
+
+### Core Game Mechanics
+- Complete implementation of Flip 7 rules
+- Support for 2-6 players
+- Action cards with special effects
+- Modifier cards for score adjustments
+
+### Player Profiles System
+- YAML-based player profile configuration
+- Customizable player personalities and strategies
+- Profile attributes include:
+  - Intelligence (affects decision quality)
+  - Risk tolerance (base risk and situational adjustments)
+  - Target score preferences
+  - Lucky/unlucky card superstitions
+  - Catch-up behavior when behind
+
+### AI Strategy Engine
+- Profile-driven decision making
+- Dynamic risk assessment based on:
+  - Current hand composition
+  - Cards seen in play
+  - Other players' scores
+  - Game state awareness
+- Learning capabilities for high-intelligence profiles
+- Personality-based decision modifications
+
+### Simulation Features
+- Configurable number of games and players
+- Detailed statistics tracking
+- Support for mixed player types (profiled and default)
+- Reproducible results with seed control
+
+### Visualization and Analytics
+- Distribution of winning scores
+- Player outcome analysis (bust/freeze/pass rates)
+- Win rates by player and profile
+- Score progression analysis
+- Summary dashboards
 
 ## Project Structure
 
@@ -20,42 +58,22 @@ Players take turns drawing cards and must decide when to pass or continue drawin
 flip7/
 ├── src/
 │   ├── game/
-│   │   ├── game.py       # Core game logic
-│   │   ├── player.py     # Player class definition
-│   │   └── card.py       # Card class and types
+│   │   ├── card.py         # Card types and mechanics
+│   │   ├── player.py       # Player implementation
+│   │   └── game.py         # Core game logic
+│   ├── profiles/
+│   │   ├── profile_loader.py  # Profile loading and validation
+│   │   └── strategy.py        # Profile-based decision making
 │   ├── simulation/
-│   │   └── simulator.py  # Simulation engine
-│   ├── visualization/
-│   │   └── visualizer.py # Visualization tools
-│   └── main.py          # Main script
-├── tests/               # Test suite
-├── output/             # Generated visualizations
-└── requirements.txt    # Dependencies
+│   │   └── simulator.py    # Simulation engine
+│   └── visualization/
+│       └── visualizer.py   # Data visualization
+├── profiles/              # Player profile definitions
+│   ├── cautious_carl.yaml
+│   └── risk_taker_rachel.yaml
+├── tests/                # Test suite
+└── output/              # Simulation results and visualizations
 ```
-
-## Example Visualizations
-
-The simulator generates several types of visualizations to help analyze game outcomes:
-
-### 1. Winning Scores Distribution
-![Winning Scores Distribution](output/winning_scores_dist.png)
-This histogram shows the distribution of winning scores across all simulated games. The visualization helps understand the typical range of winning scores and their frequency.
-
-### 2. Player Outcomes
-![Player Outcomes](output/player_outcomes.png)
-A stacked bar chart showing the proportion of different outcomes (bust, freeze, pass) for each player. This helps analyze player performance and strategy effectiveness.
-
-### 3. Win Rates
-![Win Rates](output/win_rates.png)
-Bar plot displaying the win rate for each player, helping identify if certain player positions have advantages or disadvantages.
-
-### 4. Score Progression
-![Score Progression](output/score_progression.png)
-A regression plot showing how winning scores evolve over multiple games, useful for identifying trends or patterns in game outcomes.
-
-### 5. Summary Dashboard
-![Summary Dashboard](output/dashboard.png)
-A comprehensive dashboard combining multiple visualizations for a complete overview of the simulation results.
 
 ## Installation
 
@@ -78,44 +96,80 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the simulation with default parameters:
-```bash
-python src/main.py
+### Running a Simulation
+
+```python
+from src.simulation.simulator import Simulator, SimulationConfig
+
+config = SimulationConfig(
+    num_games=1000,
+    num_players=6,
+    base_seed=42,
+    profiles_dir="profiles"
+)
+
+simulator = Simulator(config)
+results = simulator.run()
 ```
 
-The script will:
-1. Run 1000 game simulations
-2. Log summary statistics
-3. Generate visualizations in the `output/` directory
+### Creating Player Profiles
 
-## Implementation Details
+Create a YAML file in the `profiles` directory:
 
-### Game Logic
-- Implements complete Flip 7 rules
-- Handles all card types and their effects
-- Manages player states (active, frozen, passed, busted)
+```yaml
+name: "Cautious Carl"
+description: "A conservative player who prefers to play it safe"
+intelligence: 0.7
+risk_tolerance:
+  base: 0.4
+  card_count_weights: [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
+  score_sensitivity: 0.6
+  deck_awareness: 0.8
+target_score: 50
+catch_up_aggression: 0.3
+lucky_cards:
+  enabled: true
+  cards: [7]
+superstitions:
+  enabled: true
+  negative: [13]
+  threshold: 0.5
+```
 
-### Simulation Strategy
-- Uses Monte Carlo simulation
-- Tracks game statistics and player performance
-- Implements configurable number of players and games
+## Technical Details
 
-### Statistics Tracked
-- Winning scores
-- Player outcomes
-- Game duration
-- Card distribution
-- Strategy effectiveness
+### Profile System Architecture
+- **Profile Loading**: YAML-based configuration with validation
+- **Strategy Components**:
+  - Base risk calculation
+  - Deck awareness adjustments
+  - Personality-based modifications
+  - Catch-up behavior
+  - Learning and adaptation
+
+### Decision Making Process
+1. Calculate base risk from profile settings
+2. Adjust for current game state
+3. Apply personality modifiers
+4. Consider catch-up behavior
+5. Make final decision with randomization
+
+### Learning Mechanism
+- Tracks successful decisions
+- Adapts risk tolerance based on outcomes
+- Intelligence-based learning rate
+- Per-game state memory
 
 ## Dependencies
 
-- numpy (>=1.26.0)
-- pandas (>=2.1.0)
-- matplotlib (>=3.8.0)
-- seaborn (>=0.13.0)
-- pytest (>=7.4.0)
-- loguru (>=0.7.0)
-- tqdm (>=4.66.0)
+- numpy>=1.26.0
+- pandas>=2.1.0
+- matplotlib>=3.8.0
+- seaborn>=0.13.0
+- pytest>=7.4.0
+- loguru>=0.7.0
+- pyyaml>=6.0.1
+- tqdm>=4.66.0
 
 ## Contributing
 
