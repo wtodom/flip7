@@ -33,9 +33,11 @@ class Player:
         self.cards.append(card)
         
         if card.card_type == CardType.NUMBER:
-            unique_numbers = len({c.number_value for c in self.cards 
-                                if c.card_type == CardType.NUMBER})
-            if unique_numbers > 7:
+            # Get all number cards in hand
+            number_cards = [c.number_value for c in self.cards 
+                          if c.card_type == CardType.NUMBER]
+            # Check for duplicates
+            if len(number_cards) != len(set(number_cards)):
                 self.has_busted = True
                 return True
         

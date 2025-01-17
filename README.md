@@ -2,6 +2,8 @@
 
 A sophisticated simulation of the Flip 7 card game featuring AI players with configurable personalities, profile-based strategies, and comprehensive analytics. Created by AI with Cursor.
 
+For detailed simulation results and visualization examples, see [RESULTS.md](RESULTS.md).
+
 ## Overview
 
 Flip 7 is a card game where players aim to collect exactly 7 unique number cards. The game combines strategy, risk management, and luck through:
