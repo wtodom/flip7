@@ -1,0 +1,17 @@
+name: "YOLO Yuki"
+description: "A chaotic player who lives for the thrill"
+intelligence: 0.3  # Often makes impulsive decisions
+risk_tolerance:
+  base: 0.95  # Extremely high risk tolerance
+  card_count_weights: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1]  # Prefers having more cards
+  score_sensitivity: 0.2  # Barely considers current score
+  deck_awareness: 0.1  # Pays little attention to cards seen
+target_score: 77  # Aims unreasonably high
+catch_up_aggression: 2.0  # Extremely aggressive when behind
+lucky_cards:
+  enabled: true
+  cards: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # Considers all cards lucky!
+superstitions:
+  enabled: true
+  negative: []  # No negative superstitions
+  threshold: 0.0  # Never acts on negative superstitions 

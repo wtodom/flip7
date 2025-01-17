@@ -1,0 +1,17 @@
+name: "Balanced Betty"
+description: "A well-rounded player who adapts to game situations"
+intelligence: 0.75
+risk_tolerance:
+  base: 0.55
+  card_count_weights: [1.0, 0.95, 0.85, 0.75, 0.65, 0.55, 0.45]
+  score_sensitivity: 0.7
+  deck_awareness: 0.8
+target_score: 52
+catch_up_aggression: 0.5
+lucky_cards:
+  enabled: false  # Doesn't believe in luck
+  cards: []
+superstitions:
+  enabled: false  # Makes rational decisions
+  negative: []
+  threshold: 0.0 
