@@ -3,9 +3,11 @@ from dataclasses import dataclass
 from typing import Optional
 
 class CardType(Enum):
-    NUMBER = auto()
-    ACTION = auto()
-    BONUS = auto()
+    """Types of cards in the game."""
+    NUMBER = 1
+    ACTION = 2
+    BONUS = 3
+    MODIFIER = 4  # Added MODIFIER type
 
 class ActionType(Enum):
     FREEZE = auto()
@@ -22,11 +24,12 @@ class BonusType(Enum):
 
 @dataclass
 class Card:
-    """Represents a card in the Flip 7 game."""
+    """A card in the game."""
     card_type: CardType
     number_value: Optional[int] = None
     action_type: Optional[ActionType] = None
     bonus_type: Optional[BonusType] = None
+    is_multiplier: bool = False  # Added for modifier cards
 
     def __post_init__(self):
         """Validate card configuration."""
@@ -34,10 +37,16 @@ class Card:
         if self.card_type == CardType.NUMBER:
             valid = self.number_value is not None and 0 <= self.number_value <= 12
         elif self.card_type == CardType.ACTION:
+            # For action cards, the action_type should be passed as the second argument
+            if isinstance(self.number_value, ActionType):
+                self.action_type = self.number_value
+                self.number_value = None
             valid = self.action_type is not None
         elif self.card_type == CardType.BONUS:
             valid = self.bonus_type is not None
-        
+        elif self.card_type == CardType.MODIFIER:
+            valid = self.number_value is not None and self.number_value in [2, 4, 6, 8, 10]
+
         if not valid:
             raise ValueError("Invalid card configuration")
 

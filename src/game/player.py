@@ -1,6 +1,8 @@
 """Player implementation for Flip 7."""
 from dataclasses import dataclass, field
-from typing import List, Optional, Set
+from typing import List, Optional
+import random
+
 from .card import Card, CardType, ActionType
 from ..profiles.profile_loader import PlayerProfile
 from ..profiles.strategy import ProfileStrategy, GameState
@@ -40,48 +42,21 @@ class Player:
         return self.would_bust()
     
     def get_score(self) -> int:
-        """Calculate the player's current score."""
+        """Get the player's current score."""
         number_cards = [c for c in self.cards if c.card_type == CardType.NUMBER]
-        unique_numbers = len(set(c.value for c in number_cards))
-        
-        if not number_cards or self.has_busted:
-            return 0
-        
-        base_score = sum(c.value for c in number_cards)
-        bonus = 15 if unique_numbers == 7 else 0
-        
-        # Apply modifiers
-        modifier_cards = [c for c in self.cards if c.card_type == CardType.MODIFIER]
-        for card in modifier_cards:
-            if card.is_multiplier:
-                base_score *= card.value
-            else:
-                base_score += card.value
-        
-        return base_score + bonus
+        unique_numbers = len(set(c.number_value for c in number_cards))
+        return unique_numbers
     
     def would_bust(self) -> bool:
         """Check if the player would bust with their current cards."""
         number_cards = [c for c in self.cards if c.card_type == CardType.NUMBER]
-        unique_numbers = set(c.value for c in number_cards)
-        
-        # More than 7 unique numbers is a bust
-        if len(unique_numbers) > 7:
-            return True
-        
-        # Having the same number twice is a bust
-        number_counts = {}
-        for card in number_cards:
-            number_counts[card.value] = number_counts.get(card.value, 0) + 1
-            if number_counts[card.value] > 1:
-                return True
-        
-        return False
+        unique_numbers = set(c.number_value for c in number_cards)
+        return len(unique_numbers) > 7
     
     def has_seven_numbers(self) -> bool:
-        """Check if the player has exactly 7 unique numbers."""
+        """Check if the player has exactly seven unique numbers."""
         number_cards = [c for c in self.cards if c.card_type == CardType.NUMBER]
-        unique_numbers = set(c.value for c in number_cards)
+        unique_numbers = set(c.number_value for c in number_cards)
         return len(unique_numbers) == 7
     
     def should_draw_card(self, game_state: GameState) -> bool:
