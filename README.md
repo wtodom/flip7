@@ -35,6 +35,37 @@ Flip 7 is a card game where players aim to collect exactly 7 unique number cards
   - Catch-up Behavior: Aggression when behind
   - Lucky/Unlucky Cards: Superstitious preferences
 
+### Profile System
+The AI player profiles are designed to provide diverse and realistic behaviors, from rational strategies to personality-driven play styles. All profiles are stored in `src/profiles/data/` and are defined in a standardized YAML format.
+
+#### Profile Structure
+```yaml
+name: "Profile Name"
+description: "Profile description"
+intelligence: 0.7  # Scale 0-1
+risk_tolerance:
+  base: 0.5       # Scale 0-1
+  card_count_weights: [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
+  score_sensitivity: 0.6
+  deck_awareness: 0.7
+target_score: 55
+catch_up_aggression: 0.4
+lucky_cards:
+  enabled: true
+  cards: [7, "Second Chance"]
+superstitions:
+  enabled: true
+  negative: [13, "Deal Three"]
+  threshold: 0.3
+```
+
+#### Example Profiles
+1. **Balanced Betty**: Well-rounded decision making, adapts to game situations, moderate risk tolerance (0.55), target score: 52, no superstitions.
+2. **Cautious Carl**: Risk-averse strategy, values consistency, prefers lower scores (Target: 45), superstitious about 12 and Deal Three cards, high deck awareness.
+3. **Risk Taker Rachel**: Aggressive play style, high intelligence (0.9), aims for high scores (Target: 65), strong deck awareness, pure logic-based decisions.
+4. **Superstitious Sam**: Heavily influenced by numerology, avoids specific "unlucky" numbers, high intelligence but superstitious, moderate risk tolerance.
+5. **YOLO Yuki**: Extremely aggressive (Base risk: 0.95), low intelligence (0.3), unrealistic target score (77), maximum catch-up aggression.
+
 ### Simulation Engine
 - Configurable game parameters
 - Multi-player support (2-6 players)
@@ -48,7 +79,7 @@ Flip 7 is a card game where players aim to collect exactly 7 unique number cards
   - Score distributions
   - Bust/freeze/pass rates
   - Risk adjustment patterns
-  
+
 - **Visual Analysis**
   - Score progression charts
   - Player outcome analysis
@@ -127,66 +158,7 @@ This will:
    - Summary dashboard
 3. Log detailed statistics to `simulation.log`
 
-### Available Player Profiles
-
-1. **Balanced Betty**
-   - Well-rounded decision making (Intelligence: 0.75)
-   - Adapts to game situations
-   - Moderate risk tolerance (0.55)
-   - Target score: 52
-   - No superstitions
-
-2. **Cautious Carl**
-   - Risk-averse strategy (Base risk: 0.3)
-   - Values consistency
-   - Prefers lower scores (Target: 45)
-   - Superstitious about 12 and Deal Three cards
-   - High deck awareness
-
-3. **Risk Taker Rachel**
-   - Aggressive play style (Base risk: 0.8)
-   - High intelligence (0.9)
-   - Aims for high scores (Target: 65)
-   - Strong deck awareness
-   - Pure logic-based decisions
-
-4. **Superstitious Sam**
-   - Heavily influenced by numerology
-   - Avoids specific "unlucky" numbers
-   - High intelligence but superstitious
-   - Moderate risk tolerance
-   - Strong beliefs in lucky/unlucky cards
-
-5. **YOLO Yuki**
-   - Extremely aggressive (Base risk: 0.95)
-   - Low intelligence (0.3)
-   - Unrealistic target score (77)
-   - Maximum catch-up aggression
-   - Considers all cards lucky!
-
 ## Technical Implementation
-
-### Profile System
-```yaml
-# Example Profile Structure
-name: "Profile Name"
-description: "Profile description"
-intelligence: 0.7  # 0-1 scale
-risk_tolerance:
-  base: 0.5
-  card_count_weights: [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
-  score_sensitivity: 0.6
-  deck_awareness: 0.7
-target_score: 55
-catch_up_aggression: 0.4
-lucky_cards:
-  enabled: true
-  cards: [7, "Second Chance"]
-superstitions:
-  enabled: true
-  negative: [13, "Deal Three"]
-  threshold: 0.3
-```
 
 ### Decision Making Process
 1. **Base Risk Calculation**
