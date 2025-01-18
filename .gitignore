@@ -38,8 +38,8 @@ htmlcov/
 .ipynb_checkpoints
 
 # Project specific
+output/
 *.log
-logs/
 .DS_Store
 
 # Local development settings
@@ -66,4 +66,4 @@ dmypy.json
 Pipfile.lock
 
 # poetry
-poetry.lock 
+poetry.lock
