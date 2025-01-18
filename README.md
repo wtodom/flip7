@@ -55,7 +55,7 @@ lucky_cards:
   cards: [7, "Second Chance"]
 superstitions:
   enabled: true
-  negative: [13, "Deal Three"]
+  negative: [12, "Deal Three"]
   threshold: 0.3
 ```
 
