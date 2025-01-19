@@ -67,3 +67,4 @@ Pipfile.lock
 
 # poetry
 poetry.lock
+.vercel
