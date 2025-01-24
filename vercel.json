@@ -3,8 +3,6 @@
     "outputDirectory": "web/.next",
     "devCommand": "cd web && npm run dev",
     "functions": {
-        "api/*.py": {
-            "runtime": "python@3.12"
-        }
+        "api/*.py": { }
     }
 }
