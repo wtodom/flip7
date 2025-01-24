@@ -3,7 +3,7 @@
     "outputDirectory": "web/.next",
     "devCommand": "cd web && npm run dev",
     "functions": {
-        "api/index.py": {
+        "api/*.py": {
             "maxDuration": 20
         }
     }
