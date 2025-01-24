@@ -4,8 +4,7 @@
     "devCommand": "cd web && npm run dev",
     "functions": {
         "api/*.py": {
-            "memory": 3009,
-            "maxDuration": 30
+            "maxDuration": 20
         }
     }
 }
